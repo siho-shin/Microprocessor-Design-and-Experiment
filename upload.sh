@@ -4,4 +4,4 @@ export PROJECT=jkit-128
 export PROGRAMMER=stk500
 export PORT=/dev/ttyUSB0
 
-avrdude -c $PROGRAMMER -P $PORT -p m128 -U flash:w:$PROJECT.hex
+sudo avrdude -c $PROGRAMMER -P $PORT -p m128 -U flash:w:$PROJECT.hex

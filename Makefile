@@ -8,7 +8,7 @@ CC = avr-gcc
 CPP = avr-g++
 
 ## Options common to compile, link and assembly rules
-COMMON = -mmcu=$(MCU)
+COMMON = -mmcu=$(MCU) -Iinc
 
 ## Compile options common for all C compilation units.
 ## -Wall: Enable all warnings
@@ -38,7 +38,7 @@ LIBDIRS =
 INCLUDES = 
 
 ## Objects
-OBJECTS = main.o
+OBJECTS = src/main.o src/fnd.o src/switch.o src/led.o
 LINKONLYOBJECTS =
 
 ## Build
