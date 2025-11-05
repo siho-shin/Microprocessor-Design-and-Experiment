@@ -35,23 +35,14 @@ void fnd_display_number(uint16_t number)
 	int i;
 	int ten;
 	uint8_t fnd[4] = { 0, };
-	int on_count = 0;
 
-	for (i = 3, ten = 10; i >= 0; i--, ten *= 10)
+	for (i = 3, ten = 1; i >= 0; i--, ten *= 10)
 		fnd[i] = (number / ten) % 10;
+
 	for (i = 0; i < 4; i++)
-		if (fnd[i] != 0)
-			break;
-	on_count = 4 - i;
-
-	if (on_count == 0)
-		return;
-	for (i = 0; i < on_count; i++)
 	{
-		int index = i + 4 - on_count;
-
-		PORTC = fnd_number[fnd[index]];
-		PORTG = fnd_select[index];
-		display_and_delay(on_count);
+		PORTC = fnd_number[fnd[i]];
+		PORTG = fnd_select[i];
+		_delay_ms(2);
 	}
 }
