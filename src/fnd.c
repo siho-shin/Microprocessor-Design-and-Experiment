@@ -32,6 +32,11 @@ void display_and_delay(int on_count)
 
 void fnd_display_number(uint16_t number)
 {
+	fnd_display_number_dot(number, -1);
+}
+
+void fnd_display_number_dot(uint16_t number, int dotpos)
+{
 	int i;
 	int ten;
 	uint8_t fnd[4] = { 0, };
@@ -41,7 +46,7 @@ void fnd_display_number(uint16_t number)
 
 	for (i = 0; i < 4; i++)
 	{
-		PORTC = fnd_number[fnd[i]];
+		PORTC = fnd_number[fnd[i]] | (i == dotpos ? 0x80 : 0x00);
 		PORTG = fnd_select[i];
 		_delay_ms(2);
 	}

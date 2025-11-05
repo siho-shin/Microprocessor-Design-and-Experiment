@@ -11,25 +11,31 @@
 #include "led.h"
 #include "switch.h"
 
-void left_to_right(void)
-{
-	int i;
+volatile int on;
+volatile int ms;
+volatile int acc;
 
-	for (i = 0; i < 8; i++)
-	{
-		led_set(LED(i));
-		_delay_ms(50);
-	}
+void start_timer(void)
+{
+	on = 1 - on;
 }
 
-void right_to_left(void)
+void end_timer(void)
 {
-	int i;
+	ms = 0;
+	acc = 0;
+}
 
-	for (i = 7; i >= 0; i--)
+ISR(TIMER1_COMPA_vect)
+{
+	if (on)
 	{
-		led_set(LED(i));
-		_delay_ms(50);
+		acc++;
+		if (acc >= 100)
+		{
+			acc = 0;
+			ms++;
+		}
 	}
 }
 
@@ -38,13 +44,23 @@ void init(void)
 	buzzer_init();
 	fnd_init();
 	led_init();
-	switch_init(left_to_right, right_to_left);
+	switch_init(start_timer, end_timer);
+
+	TCCR1A |= (1 << COM1A1);
+	TCCR1B |= (1 << WGM12) | (1 << CS10);
+	OCR1A = 16384;
+
+	TIMSK |= (1 << OCIE1A);
+
+	ms = 0;
+	acc = 0;
+	sei();
 }
 
 int main(void)
 {
 	init();
-
+	
 	while (1)
-		fnd_display_number(7);
+		fnd_display_number_dot(ms, 2);
 }

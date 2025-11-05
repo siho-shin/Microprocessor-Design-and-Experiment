@@ -6,13 +6,13 @@
 
 switch_handler_t handlers[2];
 
-SIGNAL(INT4_vect)
+ISR(INT4_vect)
 {
 	if (handlers[0])
 		handlers[0]();
 }
 
-SIGNAL(INT5_vect)
+ISR(INT5_vect)
 {
 	if (handlers[1])
 		handlers[1]();
