@@ -37,7 +37,7 @@ void print_frame(void)
 			byte <<= 1;
 		}
 
-		if (i % 16 == 0)
+		if (i % 16 == 15)
 			printf("\n");
 	}
 }
@@ -51,7 +51,7 @@ void job(char *path)
 	while (read(fd, buf, frame_size) == frame_size)
 	{
 		print_frame();
-		sleep_ms(67);
+		sleep_ms(33);
 		system("clear");
 	}
 }

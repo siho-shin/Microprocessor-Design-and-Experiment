@@ -45,7 +45,7 @@ def convert(path, out):
             ret, frame = cap.read()
             if not ret:
                 break
-            if fps == 30 and frame_index % 2 == 1:
+            if fps == 60 and frame_index % 2 == 1:
                 frame_index += 1
                 continue
             
