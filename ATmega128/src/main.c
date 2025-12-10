@@ -10,10 +10,10 @@
 #include "fnd.h"
 #include "led.h"
 #include "switch.h"
+#include "timer.h"
 
 volatile int on;
 volatile int ms;
-volatile int acc;
 
 void start_timer(void)
 {
@@ -23,20 +23,6 @@ void start_timer(void)
 void end_timer(void)
 {
 	ms = 0;
-	acc = 0;
-}
-
-ISR(TIMER1_COMPA_vect)
-{
-	if (on)
-	{
-		acc++;
-		if (acc >= 100)
-		{
-			acc = 0;
-			ms++;
-		}
-	}
 }
 
 void init(void)
@@ -45,16 +31,13 @@ void init(void)
 	fnd_init();
 	led_init();
 	switch_init(start_timer, end_timer);
+	timer_init();
+}
 
-	TCCR1A |= (1 << COM1A1);
-	TCCR1B |= (1 << WGM12) | (1 << CS10);
-	OCR1A = 16384;
-
-	TIMSK |= (1 << OCIE1A);
-
-	ms = 0;
-	acc = 0;
-	sei();
+void mspp(void)
+{
+	if (on)
+		ms++;
 }
 
 int main(void)
@@ -62,5 +45,12 @@ int main(void)
 	init();
 	
 	while (1)
+	{
 		fnd_display_number_dot(ms, 2);
+		if (on)
+		{
+			timer_sleep(100);
+			ms++;
+		}
+	}
 }
