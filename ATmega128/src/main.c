@@ -34,23 +34,28 @@ void init(void)
 	timer_init();
 }
 
+void display(void)
+{
+	//fnd_display_number_dot(ms, 2);
+	led_set(0b01010101);
+	timer_notify(50, display);
+}
+
 void mspp(void)
 {
+	led_set(0b10101010);
+
 	if (on)
 		ms++;
+	timer_notify(100, mspp);
 }
 
 int main(void)
 {
 	init();
 	
-	while (1)
-	{
-		fnd_display_number_dot(ms, 2);
-		if (on)
-		{
-			timer_sleep(100);
-			ms++;
-		}
-	}
+	display();
+	mspp();
+
+	schedule();
 }

@@ -48,6 +48,6 @@ void fnd_display_number_dot(uint16_t number, int dotpos)
 	{
 		PORTC = fnd_number[fnd[i]] | (i == dotpos ? 0x80 : 0x00);
 		PORTG = fnd_select[i];
-		_delay_ms(2);
+		_delay_ms(1);
 	}
 }
