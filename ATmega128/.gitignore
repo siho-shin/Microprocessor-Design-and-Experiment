@@ -4,5 +4,7 @@
 *.lss
 *.map
 *.o
+*.swp
+*.swo
 
 videos/

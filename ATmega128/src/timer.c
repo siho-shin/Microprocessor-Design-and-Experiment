@@ -7,6 +7,7 @@
 #include "timer.h"
 
 // debug
+#include <util/delay.h>
 #include "led.h"
 #include "fnd.h"
 
@@ -19,7 +20,11 @@ struct wq
 	timerfunc_t handler;
 }	waiting[WAITING_QUEUE_SZ];
 
-int waiting_cnt;
+// front          back_excl
+// [0]  [1]  [2]  [x]  ...
+int front = 0;
+int back_excl = 1;
+int has_init = 0;
 
 void reset_waiting_queue_element(int i)
 {
@@ -28,62 +33,53 @@ void reset_waiting_queue_element(int i)
 	waiting[i].handler = 0;
 }
 
-void swap(int i, int j)
+int is_passed(int index, long long cur_ticks)
 {
-	struct wq temp;
-
-	temp = waiting[i];
-	waiting[i] = waiting[j];
-	waiting[j] = temp;
+	return waiting[index].arrival_time + waiting[index].sleep_time <= cur_ticks;
 }
 
-void push_back(int from_index)
+void circular_increment(int *ptr)
 {
-	int i;
-
-	for (i = WAITING_QUEUE_SZ - 1; i > from_index; i--)
-		swap(i, i - 1);
+	*ptr = (*ptr + 1) % WAITING_QUEUE_SZ;
 }
 
-void push_front(int from_index)
+int insertable(void)
 {
-	int i;
-
-	for (i = 0; i < WAITING_QUEUE_SZ; i++)
-		swap(i, i + 1);
+	//                front
+	//                back_excl
+	// [x]  [x]  [x]  [x]  [x]  [x]  ...
+	return front != back_excl;
 }
 
 int insert_to_queue(int sleep_time, timerfunc_t handler)
 {
-	int i;
 	long long cur_ticks = ticks;
+	int pos = has_init ? back_excl : 0;
 
-	for (i = 0; i < WAITING_QUEUE_SZ; i++)
-		if (cur_ticks + sleep_time <= waiting[i].arrival_time + waiting[i].sleep_time)
-			break;
-	push_back(i);
+	while (!insertable());
 
-	waiting[i].arrival_time = cur_ticks;
-	waiting[i].sleep_time = sleep_time;
-	waiting[i].handler = handler;
-	waiting_cnt++;
+	cli();
+	waiting[pos].arrival_time = cur_ticks;
+	waiting[pos].sleep_time = sleep_time;
+	waiting[pos].handler = handler;
+	if (has_init)
+		circular_increment(&back_excl);
+	else
+		has_init = 1;
+	sei();
 
 	return 0;
 }
 
 void set_off(long long set_off_time)
 {
-	int i, j;
-
 	cli();
-	for (i = 0; set_off_time >= waiting[0].arrival_time + waiting[0].sleep_time; i++)
+	while (insertable() && is_passed(front, set_off_time))
 	{
-		waiting[0].handler();
-		push_front(0);
+		waiting[front].handler();
+		reset_waiting_queue_element(front);
+		circular_increment(&front);
 	}
-	waiting_cnt -= i;
-	for (j = WAITING_QUEUE_SZ - 1; i >= 0; i--, j--)
-		reset_waiting_queue_element(j);
 	sei();
 }
 
@@ -103,30 +99,12 @@ void timer_init(void)
 
 	for (i = 0; i < WAITING_QUEUE_SZ; i++)
 		reset_waiting_queue_element(i);
-
 	sei();
 }
 
-void timer_sleep(int ms)
+void timer_notify(int ms, timerfunc_t func)
 {
-	int arrival_time;
-
-	for (arrival_time = ticks; ticks < arrival_time + ms;);
-}
-
-int timer_notify(int ms, timerfunc_t func)
-{
-	cli();
-	if (waiting_cnt >= WAITING_QUEUE_SZ)
-		goto fail;
-	if (insert_to_queue(ms, func))
-		goto fail;
-	sei();
-	return 0;
-
-fail:
-	sei();
-	return -1;
+	insert_to_queue(ms, func);
 }
 
 void schedule(void)
@@ -137,11 +115,15 @@ void schedule(void)
 	{
 		cur_ticks = ticks;
 
-		fnd_display_number((waiting[0].arrival_time + waiting[0].sleep_time) % 10000);
+		//fnd_display_number((waiting[front].arrival_time + waiting[front].sleep_time) % 10000);
+		//fnd_display_number(back_excl);
 
-		if (waiting[0].arrival_time == WAITING_QUEUE_INVALID)
+		if (!insertable())
+		{
+			led_set(0b11000011);
 			continue;
-		if (waiting[0].arrival_time + waiting[0].sleep_time <= cur_ticks)
+		}
+		if (is_passed(front, cur_ticks))
 			set_off(cur_ticks);
 	}
 }
