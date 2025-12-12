@@ -3,6 +3,7 @@
 
 void fnd_init(void);
 void fnd_display_number(uint16_t number);
+void fnd_display_one_number(uint16_t number, int pos);
 void fnd_display_number_dot(uint16_t number, int dotpos);
 
 #endif

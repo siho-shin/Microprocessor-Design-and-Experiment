@@ -16,10 +16,6 @@ uint8_t fnd_select[4] = {
 	0x08, 0x04, 0x02, 0x01
 };
 
-int delay_dist[4] = {
-	10, 4, 4, 1
-};
-
 void fnd_init(void)
 {
 	DDRC |= 0xFF;
@@ -29,6 +25,12 @@ void fnd_init(void)
 void fnd_display_number(uint16_t number)
 {
 	fnd_display_number_dot(number, -1);
+}
+
+void fnd_display_one_number(uint16_t number, int pos)
+{
+	PORTC = fnd_number[number];
+	PORTG = fnd_select[pos];
 }
 
 void fnd_display_number_dot(uint16_t number, int dotpos)

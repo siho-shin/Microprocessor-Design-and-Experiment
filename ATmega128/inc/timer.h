@@ -7,7 +7,7 @@
 typedef void (*timerfunc_t)(void);
 
 void timer_init(void);
-void timer_notify(int ms, timerfunc_t func);
+void timer_notify(long long ms, timerfunc_t func);
 void schedule(void);
 
 #endif

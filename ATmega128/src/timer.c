@@ -10,13 +10,14 @@
 #include <util/delay.h>
 #include "led.h"
 #include "fnd.h"
+#include "debug.h"
 
 volatile long long ticks;
 
 struct wq
 {
 	long long arrival_time;
-	int sleep_time;
+	long long sleep_time;
 	timerfunc_t handler;
 }	waiting[WAITING_QUEUE_SZ];
 
@@ -51,11 +52,46 @@ int insertable(void)
 	return front != back_excl;
 }
 
-int insert_to_queue(int sleep_time, timerfunc_t handler)
+void swap(int i, int j)
+{
+	struct wq temp;
+
+	temp = waiting[i];
+	waiting[i] = waiting[j];
+	waiting[j] = temp;
+}
+
+void sort(void)
+{
+	int i, j;
+	int min;
+
+	debug(MOD_TIMER, SORT);
+	for (i = front; i != back_excl; circular_increment(&i))
+	{
+		min = front;
+
+		debug(MOD_TIMER, SORT1);
+		for (j = i; j != back_excl; circular_increment(&j))
+		{
+			if (waiting[j].arrival_time == WAITING_QUEUE_INVALID)
+				while (1) fnd_display_number(front * 100 + back_excl);
+
+			if (waiting[j].arrival_time + waiting[j].sleep_time < waiting[min].arrival_time + waiting[min].sleep_time)
+				min = j;
+		}
+
+		debug(MOD_TIMER, SORT2);
+		swap(min, i);
+	}
+}
+
+int insert_to_queue(long long sleep_time, timerfunc_t handler)
 {
 	long long cur_ticks = ticks;
 	int pos = has_init ? back_excl : 0;
 
+	debug(MOD_TIMER, INSERT_TO_QUEUE);
 	while (!insertable());
 
 	cli();
@@ -66,6 +102,7 @@ int insert_to_queue(int sleep_time, timerfunc_t handler)
 		circular_increment(&back_excl);
 	else
 		has_init = 1;
+	sort();
 	sei();
 
 	return 0;
@@ -73,6 +110,8 @@ int insert_to_queue(int sleep_time, timerfunc_t handler)
 
 void set_off(long long set_off_time)
 {
+	debug(MOD_TIMER, SET_OFF);
+
 	cli();
 	while (insertable() && is_passed(front, set_off_time))
 	{
@@ -94,7 +133,7 @@ void timer_init(void)
 
 	TCCR1A |= (1 << COM1A1);
 	TCCR1B |= (1 << WGM12) | (1 << CS10);
-	OCR1A = 16384;
+	OCR1A = 4096;
 	TIMSK |= (1 << OCIE1A);
 
 	for (i = 0; i < WAITING_QUEUE_SZ; i++)
@@ -102,7 +141,7 @@ void timer_init(void)
 	sei();
 }
 
-void timer_notify(int ms, timerfunc_t func)
+void timer_notify(long long ms, timerfunc_t func)
 {
 	insert_to_queue(ms, func);
 }
