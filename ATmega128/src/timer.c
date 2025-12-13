@@ -12,12 +12,12 @@
 #include "fnd.h"
 #include "debug.h"
 
-volatile long long ticks;
+volatile time_t ticks;
 
 struct wq
 {
-	long long arrival_time;
-	long long sleep_time;
+	time_t arrival_time;
+	time_t sleep_time;
 	timerfunc_t handler;
 }	waiting[WAITING_QUEUE_SZ];
 
@@ -39,7 +39,7 @@ void circular_increment(int *ptr)
 	*ptr = (*ptr + 1) % WAITING_QUEUE_SZ;
 }
 
-int is_passed(int index, long long cur_ticks)
+int is_passed(int index, time_t cur_ticks)
 {
 	return waiting[index].arrival_time + waiting[index].sleep_time <= cur_ticks;
 }
@@ -92,7 +92,7 @@ void sort(void)
 	{
 		min = i;
 
-		debug(MOD_TIMER, SORT1);
+	//	debug(MOD_TIMER, SORT1);
 		for (j = i; j != back_excl; circular_increment(&j))
 		{
 			if (waiting[j].arrival_time == WAITING_QUEUE_INVALID)
@@ -109,14 +109,14 @@ void sort(void)
 		}
 
 		swap(min, i);
-		debug(MOD_TIMER, SORT2);
+	//	debug(MOD_TIMER, SORT2);
 	}
-	debug(MOD_TIMER, SORT3);
+	//debug(MOD_TIMER, SORT3);
 }
 
-int insert_to_queue(long long sleep_time, timerfunc_t handler)
+int insert_to_queue(time_t sleep_time, timerfunc_t handler)
 {
-	long long cur_ticks = ticks;
+	time_t cur_ticks = ticks;
 	int pos = has_init ? back_excl : 0;
 
 	//debug(MOD_TIMER, INSERT_TO_QUEUE);
@@ -136,7 +136,7 @@ int insert_to_queue(long long sleep_time, timerfunc_t handler)
 	return 0;
 }
 
-void set_off(long long set_off_time)
+void set_off(time_t set_off_time)
 {
 	//debug(MOD_TIMER, SET_OFF);
 
@@ -169,14 +169,14 @@ void timer_init(void)
 	sei();
 }
 
-void timer_notify(long long ms, timerfunc_t func)
+void timer_notify(time_t ms, timerfunc_t func)
 {
 	insert_to_queue(ms, func);
 }
 
 void schedule(void)
 {
-	long long cur_ticks;
+	time_t cur_ticks;
 
 	while (1)
 	{
