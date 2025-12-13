@@ -5,6 +5,7 @@
 #include "switch.h"
 
 switch_handler_t handlers[2];
+volatile char switch_is_init;
 
 ISR(INT4_vect)
 {
@@ -20,6 +21,9 @@ ISR(INT5_vect)
 
 void switch_init(switch_handler_t handler0, switch_handler_t handler1)
 {
+	if (switch_is_init)
+		return;
+
 	DDRA |= 0xFF;
 	DDRG |= 0x00;
 	EICRB |= 0xAA;
@@ -28,6 +32,7 @@ void switch_init(switch_handler_t handler0, switch_handler_t handler1)
 
 	handlers[0] = handler0;
 	handlers[1] = handler1;
+	switch_is_init = 1;
 }
 
 switch_handler_t switch_change_handler(int index, switch_handler_t new_handler)

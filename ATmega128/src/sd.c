@@ -3,24 +3,22 @@
 #include <stdint.h>
 
 #include "sd.h"
+#include "spi.h"
+
+// DEBUG
+#include "fnd.h"
 
 #define SD_CS_LOW()	(PORTB &= ~(1 << SD_CS))
 #define SD_CS_HIGH()	(PORTB |= (1 << SD_CS))
 
-uint8_t spi_transfer(uint8_t data)
-{
-	SPDR = data;
-	while (!(SPSR & (1 << SPIF)));
-	return SPDR;
-}
+volatile char sd_is_init;
 
 void sd_idle_clocks(void)
 {
 	int i;
 
 	SD_CS_HIGH();
-
-	for (i = 0; i < 10; i++)
+	for (i = 0; i < 1000; i++)
 		spi_transfer(0xFF);
 }
 
@@ -43,14 +41,14 @@ uint8_t sd_send_command(uint8_t cmd, uint32_t arg)
 	else
 		spi_transfer(0xFF);
 
-	for (i = 0; i < 10; i++)
+	for (i = 0; i < 100; i++)
 	{
 		ret = spi_transfer(0xFF);
 		if (!(ret & 0x80))
 			return ret;
 	}
 
-	return 0xFF;
+	return 0xFE;
 }
 
 int sd_comm_init(void)
@@ -63,15 +61,18 @@ int sd_comm_init(void)
 	ret = sd_send_command(0, 0);
 	SD_CS_HIGH();
 
+	//while (1) fnd_display_number(ret);
+
 	if (ret != 0x01)
 		return 0;
 
 	do
 	{
 		SD_CS_LOW();
-		ret = sd_send_command(1, 0);
+		ret = sd_send_command(0x08, 0x000001AA);
 		SD_CS_HIGH();
-	} while (ret != 0x00);
+		fnd_display_number(ret);
+	} while (ret != 0x01);
 
 	return 1;
 }
@@ -106,11 +107,15 @@ uint8_t sd_read_blk(uint32_t lba, uint8_t *buf)
 
 int sd_init(void)
 {
-	DDRF |= (1 << SD_CS) | (1 << SD_SCK) | (1 << SD_MOSI);
-	DDRF &= ~(1 << SD_MISO);
+	if (sd_is_init)
+		return 1;
 
+	DDRB |= (1 << SD_CS) | (1 << SD_SCK) | (1 << SD_MOSI);
+	DDRB &= ~(1 << SD_MISO);
 	SPCR = (1 << SPE) | (1 << MSTR);
 	SPCR |= (1 << SPR1) | (1 << SPR0);
+	SPSR &= ~(1 << SPI2X);
+	sd_is_init = 1;
 
 	return sd_comm_init();
 }

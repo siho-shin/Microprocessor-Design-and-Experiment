@@ -25,7 +25,8 @@ struct wq
 // [0]  [1]  [2]  [x]  ...
 int front = 0;
 int back_excl = 1;
-int has_init = 0;
+char has_init = 0;
+volatile char timer_is_init;
 
 void reset_waiting_queue_element(int i)
 {
@@ -159,10 +160,14 @@ void timer_init(void)
 {
 	int i;
 
+	if (timer_is_init)
+		return;
+
 	TCCR1A |= (1 << COM1A1);
 	TCCR1B |= (1 << WGM12) | (1 << CS10);
 	OCR1A = 4096;
 	TIMSK |= (1 << OCIE1A);
+	timer_is_init = 1;
 
 	for (i = 0; i < WAITING_QUEUE_SZ; i++)
 		reset_waiting_queue_element(i);

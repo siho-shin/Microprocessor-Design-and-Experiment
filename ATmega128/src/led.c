@@ -3,12 +3,15 @@
 
 #include "led.h"
 
-int current_led;
+volatile char led_is_init;
 
 void led_init(void)
 {
+	if (led_is_init)
+		return;
+
 	DDRA |= 0xFF;
-	current_led = 0;
+	led_is_init = 1;
 }
 
 void led_set(int leds)

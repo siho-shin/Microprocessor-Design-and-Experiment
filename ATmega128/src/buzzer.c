@@ -4,6 +4,8 @@
 #include <util/delay.h>
 #include "buzzer.h"
 
+volatile char buzzer_is_init;
+
 void dynamic_delay_us(int us)
 {
 	int i;
@@ -14,7 +16,11 @@ void dynamic_delay_us(int us)
 
 void buzzer_init(void)
 {
+	if (buzzer_is_init)
+		return;
+
 	DDRB |= (1 << PB4);
+	buzzer_is_init = 1;
 }
 
 void buzzer(int hz)
