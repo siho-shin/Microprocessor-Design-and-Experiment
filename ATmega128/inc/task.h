@@ -22,16 +22,6 @@
 			func();				\
 	}
 
-#define TASK_DYNAMIC(func, period, start_cond, end_cond)\
-	void __##func##_task(void)			\
-	{						\
-		if ((end_cond))				\
-			return;				\
-		timer_notify((period), __##func##_task);\
-		if ((start_cond))			\
-			func();				\
-	}
-
 #define START_TASK(func)	\
 	__##func##_task();
 		

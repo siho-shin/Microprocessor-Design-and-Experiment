@@ -54,14 +54,14 @@ uint8_t sd_send_command(uint8_t cmd, uint32_t arg)
 int sd_comm_init(void)
 {
 	uint8_t ret;
+	uint32_t r7;
+	int i;
 
 	sd_idle_clocks();
 
 	SD_CS_LOW();
 	ret = sd_send_command(0, 0);
 	SD_CS_HIGH();
-
-	//while (1) fnd_display_number(ret);
 
 	if (ret != 0x01)
 		return 0;
@@ -71,8 +71,25 @@ int sd_comm_init(void)
 		SD_CS_LOW();
 		ret = sd_send_command(0x08, 0x000001AA);
 		SD_CS_HIGH();
-		fnd_display_number(ret);
 	} while (ret != 0x01);
+
+	SD_CS_LOW();
+	for (i = 0, r7 = 0; i < 4; i++)
+		r7 = (r7 << 8) | spi_transfer(0xFF);
+	SD_CS_HIGH();
+
+	do
+	{
+		SD_CS_LOW();
+		ret = sd_send_command(55, 0);
+		SD_CS_HIGH();
+		spi_transfer(0xFF);
+
+		SD_CS_LOW();
+		ret = sd_send_command(41, 0x40000000);
+		SD_CS_HIGH();
+		spi_transfer(0xFF);
+	} while (ret != 0x00);
 
 	return 1;
 }
@@ -84,7 +101,7 @@ uint8_t sd_read_blk(uint32_t lba, uint8_t *buf)
 
 	SD_CS_LOW();
 
-	ret = sd_send_command(17, lba * 512);
+	ret = sd_send_command(17, lba);
 	if (ret != 0x00)
 	{
 		SD_CS_HIGH();
