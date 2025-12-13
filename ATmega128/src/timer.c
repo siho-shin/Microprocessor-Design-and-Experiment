@@ -66,22 +66,28 @@ void sort(void)
 	int i, j;
 	int min;
 
-	debug(MOD_TIMER, SORT);
+	//debug(MOD_TIMER, SORT);
 	for (i = front; i != back_excl; circular_increment(&i))
 	{
 		min = front;
 
-		debug(MOD_TIMER, SORT1);
+		//debug(MOD_TIMER, SORT1);
 		for (j = i; j != back_excl; circular_increment(&j))
 		{
 			if (waiting[j].arrival_time == WAITING_QUEUE_INVALID)
-				while (1) fnd_display_number(front * 100 + back_excl);
+			{
+				while (1)
+				{
+					fnd_display_number(front * 100 + back_excl);
+					led_set(0b11100111);
+				}
+			}
 
 			if (waiting[j].arrival_time + waiting[j].sleep_time < waiting[min].arrival_time + waiting[min].sleep_time)
 				min = j;
 		}
 
-		debug(MOD_TIMER, SORT2);
+		//debug(MOD_TIMER, SORT2);
 		swap(min, i);
 	}
 }
@@ -91,7 +97,7 @@ int insert_to_queue(long long sleep_time, timerfunc_t handler)
 	long long cur_ticks = ticks;
 	int pos = has_init ? back_excl : 0;
 
-	debug(MOD_TIMER, INSERT_TO_QUEUE);
+	//debug(MOD_TIMER, INSERT_TO_QUEUE);
 	while (!insertable());
 
 	cli();
@@ -110,16 +116,16 @@ int insert_to_queue(long long sleep_time, timerfunc_t handler)
 
 void set_off(long long set_off_time)
 {
-	debug(MOD_TIMER, SET_OFF);
+	//debug(MOD_TIMER, SET_OFF);
 
-	cli();
 	while (insertable() && is_passed(front, set_off_time))
 	{
 		waiting[front].handler();
+		cli();
 		reset_waiting_queue_element(front);
 		circular_increment(&front);
+		sei();
 	}
-	sei();
 }
 
 ISR(TIMER1_COMPA_vect)
@@ -153,9 +159,6 @@ void schedule(void)
 	while (1)
 	{
 		cur_ticks = ticks;
-
-		//fnd_display_number((waiting[front].arrival_time + waiting[front].sleep_time) % 10000);
-		//fnd_display_number(back_excl);
 
 		if (!insertable())
 		{
