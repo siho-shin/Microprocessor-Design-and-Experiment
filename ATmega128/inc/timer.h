@@ -4,7 +4,7 @@
 #define WAITING_QUEUE_INVALID	0x7FFFFFFF
 #define WAITING_QUEUE_SZ	32
 
-#define MS_TO_UNITS(x)		((long long)((x) * 4))
+#define MS(x)	((long long)((x) * 4))
 
 typedef void (*timerfunc_t)(void);
 typedef unsigned long long time_t;

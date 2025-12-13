@@ -38,7 +38,7 @@ LIBDIRS =
 INCLUDES = 
 
 ## Objects
-OBJECTS = src/main.o src/fnd.o src/switch.o src/led.o src/buzzer.o src/timer.o src/debug.o
+OBJECTS = src/main.o src/fnd.o src/switch.o src/led.o src/buzzer.o src/timer.o src/debug.o src/sd.o
 LINKONLYOBJECTS =
 
 ## Build

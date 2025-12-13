@@ -11,11 +11,11 @@
 #include "led.h"
 #include "switch.h"
 #include "timer.h"
+#include "sd.h"
+#include "task.h"
 
 volatile int on;
 volatile int ms;
-
-extern volatile long long ticks; // DEBUG
 
 void start_timer(void)
 {
@@ -27,35 +27,74 @@ void end_timer(void)
 	ms = 0;
 }
 
-void init(void)
-{
-	buzzer_init();
-	fnd_init();
-	led_init();
-	switch_init(start_timer, end_timer);
-	timer_init();
-}
-
 void display(void)
 {
 	fnd_display_number_dot(ms, 2);
-	timer_notify(2, display);
 }
 
 void mspp(void)
 {
 	if (on)
 		ms++;
-	timer_notify(MS_TO_UNITS(100), mspp);
 }
+
+volatile char is_playing;
+
+void upper_switch(void)
+{
+	if (is_playing)
+	{
+		// unimplemented
+	}
+	else
+	{
+		
+	}
+}
+
+void lower_switch(void)
+{
+
+}
+
+void init_failed(void)
+{
+	while (1) fnd_display_number(4444);
+}
+
+void init_succeed(void)
+{
+	
+}
+
+void init(void)
+{
+	buzzer_init();
+	fnd_init();
+	led_init();
+	switch_init(start_timer, end_timer);
+	//switch_init(upper_switch, lower_switch);
+	timer_init();
+
+	/*
+	if (!sd_init())
+		init_failed();
+		*/
+}
+
+TASK(display, 2, TASK_NO_CONDITION);
+TASK(mspp, MS(100), TASK_NO_CONDITION);
 
 int main(void)
 {
 	init();
 	
-	display();
+//	display();
+//	mspp();
 
-	mspp();
+	START_TASK(display);
+	START_TASK(mspp);
+
 	schedule();
 	while (1);
 }
