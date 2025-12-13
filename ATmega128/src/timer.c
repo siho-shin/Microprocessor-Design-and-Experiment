@@ -34,22 +34,43 @@ void reset_waiting_queue_element(int i)
 	waiting[i].handler = 0;
 }
 
-int is_passed(int index, long long cur_ticks)
-{
-	return waiting[index].arrival_time + waiting[index].sleep_time <= cur_ticks;
-}
-
 void circular_increment(int *ptr)
 {
 	*ptr = (*ptr + 1) % WAITING_QUEUE_SZ;
 }
 
-int insertable(void)
+int is_passed(int index, long long cur_ticks)
 {
-	//                front
-	//                back_excl
-	// [x]  [x]  [x]  [x]  [x]  [x]  ...
-	return front != back_excl;
+	return waiting[index].arrival_time + waiting[index].sleep_time <= cur_ticks;
+}
+
+// empty:
+//                front
+//                back_excl
+// [x]  [x]  [x]  [x]  [x]  [x]  ...
+//
+// full :
+//                front
+//                back_excl
+// [0]  [1]  [2]  [3]  [4]  [5]  ...
+int is_queue_empty(void)
+{
+	return front == back_excl && waiting[front].arrival_time == WAITING_QUEUE_INVALID;
+}
+
+int is_queue_full(void)
+{
+	return front == back_excl && waiting[front].arrival_time != WAITING_QUEUE_INVALID;
+}
+
+int is_insertable(timerfunc_t handler)
+{
+	int i;
+
+	for (i = front; i != back_excl; circular_increment(&i))
+		if (waiting[i].handler == handler)
+			return 0;
+	return 1;
 }
 
 void swap(int i, int j)
@@ -69,9 +90,9 @@ void sort(void)
 	//debug(MOD_TIMER, SORT);
 	for (i = front; i != back_excl; circular_increment(&i))
 	{
-		min = front;
+		min = i;
 
-		//debug(MOD_TIMER, SORT1);
+		debug(MOD_TIMER, SORT1);
 		for (j = i; j != back_excl; circular_increment(&j))
 		{
 			if (waiting[j].arrival_time == WAITING_QUEUE_INVALID)
@@ -87,9 +108,10 @@ void sort(void)
 				min = j;
 		}
 
-		//debug(MOD_TIMER, SORT2);
 		swap(min, i);
+		debug(MOD_TIMER, SORT2);
 	}
+	debug(MOD_TIMER, SORT3);
 }
 
 int insert_to_queue(long long sleep_time, timerfunc_t handler)
@@ -98,7 +120,7 @@ int insert_to_queue(long long sleep_time, timerfunc_t handler)
 	int pos = has_init ? back_excl : 0;
 
 	//debug(MOD_TIMER, INSERT_TO_QUEUE);
-	while (!insertable());
+	while (is_queue_full());// || !is_insertable(handler));
 
 	cli();
 	waiting[pos].arrival_time = cur_ticks;
@@ -118,7 +140,7 @@ void set_off(long long set_off_time)
 {
 	//debug(MOD_TIMER, SET_OFF);
 
-	while (insertable() && is_passed(front, set_off_time))
+	while (!is_queue_empty() && is_passed(front, set_off_time))
 	{
 		waiting[front].handler();
 		cli();
@@ -160,7 +182,7 @@ void schedule(void)
 	{
 		cur_ticks = ticks;
 
-		if (!insertable())
+		if (is_queue_empty())
 		{
 			led_set(0b11000011);
 			continue;

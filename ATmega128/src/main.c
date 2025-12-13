@@ -38,34 +38,26 @@ void init(void)
 
 void display_0(void)
 {
-	//fnd_display_one_number((ms / 1000) % 10, 0);
-	//fnd_display_number(ticks);
-	timer_notify(100, display_0);
-	led_set(0b10000000);
+	fnd_display_one_number((ms / 1000) % 10, 0);
+	timer_notify(2, display_0);
 }
 
 void display_1(void)
 {
-	//fnd_display_one_number((ms / 100) % 10, 1);
-	fnd_display_number(ticks);
-	timer_notify(100, display_1);
-	led_set(0b01000000);
+	fnd_display_one_number((ms / 100) % 10, 1);
+	timer_notify(2, display_1);
 }
 
 void display_2(void)
 {
-	//fnd_display_one_number((ms / 10) % 10, 2);
-	fnd_display_number(ticks);
-	timer_notify(100, display_2);
-	led_set(0b00100000);
+	fnd_display_one_number((ms / 10) % 10, 2);
+	timer_notify(2, display_2);
 }
 
 void display_3(void)
 {
-	//fnd_display_one_number((ms / 1) % 10, 3);
-	fnd_display_number(ticks);
-	timer_notify(100, display_3);
-	led_set(0b00010000);
+	fnd_display_one_number((ms / 1) % 10, 3);
+	timer_notify(2, display_3);
 }
 
 void display(void)
@@ -91,7 +83,7 @@ int main(void)
 	display_2();
 	display_3();
 
-//	mspp();
+	mspp();
 	schedule();
 	while (1);
 }
