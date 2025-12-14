@@ -107,12 +107,14 @@ void lower_switch(void)
 
 	}
 	else
+		// change this to "play"
 		video_selected = (video_selected + video_cnt - 1) % video_cnt;
 }
 
 void show_menu(void)
 {
-	fnd_display_number((video_selected % 100) * 100 + (video_cnt % 100));
+	led_set(1 << (7 - video_selected));
+	fnd_display_number_dot((video_selected % 100) * 100 + (video_cnt % 100), 1);
 }
 
 TASK_DOIF(show_menu, MS(2), booting >= 10);
