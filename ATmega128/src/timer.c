@@ -165,7 +165,7 @@ void timer_init(void)
 
 	TCCR1A |= (1 << COM1A1);
 	TCCR1B |= (1 << WGM12) | (1 << CS10);
-	OCR1A = 4096;
+	OCR1A = 1024;
 	TIMSK |= (1 << OCIE1A);
 	timer_is_init = 1;
 

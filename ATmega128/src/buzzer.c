@@ -2,10 +2,12 @@
 #include <avr/io.h>
 #include <avr/iom128.h>
 #include <util/delay.h>
+#include <stdint.h>
 #include "buzzer.h"
 
 volatile char buzzer_is_init;
 
+/*
 void dynamic_delay_us(int us)
 {
 	int i;
@@ -13,6 +15,7 @@ void dynamic_delay_us(int us)
 	for (i = 0; i < us; i++)
 		_delay_us(1);
 }
+*/
 
 void buzzer_init(void)
 {
@@ -23,6 +26,12 @@ void buzzer_init(void)
 	buzzer_is_init = 1;
 }
 
+void pcm(uint8_t byte)
+{
+	
+}
+
+/*
 void buzzer(int hz)
 {
 	int us;
@@ -36,3 +45,4 @@ void buzzer(int hz)
 	PORTB &= ~(1 << PB4);
 	dynamic_delay_us(us);
 }
+*/

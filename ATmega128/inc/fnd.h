@@ -2,6 +2,9 @@
 #define __FND_H__
 
 #include <stdint.h>
+#include "timer.h"
+
+#define FND_DISPLAY_RATE	TICKS(8)
 
 void fnd_init(void);
 void fnd_display_number(uint16_t number);

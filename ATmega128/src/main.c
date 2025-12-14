@@ -51,7 +51,7 @@ void init_failed(int error)
 	while (1) fnd_display_number(error);
 }
 
-TASK_WHILE(booting_screen, 2, booting < 10);
+TASK_WHILE(booting_screen, FND_DISPLAY_RATE, booting < 10);
 TASK_WHILE(booting_inc, MS(300), booting < 10);
 TASK_WHILE(booting_flicker, MS(150), booting < 10);
 
