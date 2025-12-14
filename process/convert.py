@@ -74,68 +74,17 @@ def to_wav(path):
         path + ".wav"
     ], check=True)
 
-def dominant_freq(frame, sr):
-    window = np.hanning(len(frame))
-    spectrum = np.abs(np.fft.rfft(frame * window))
-    freqs = np.fft.rfftfreq(len(frame), 1 / sr)
-
-    peak = np.argmax(spectrum)
-    return freqs[peak]
-
-def quantize(f):
-    if f < 200:
-        return 0
-    if f > 10000:
-        return 20000
-    return int(f)
-
-def compress(freqs, frame_ms):
-    result = []
-
-    prev = freqs[0]
-    length = frame_ms
-
-    for f in freqs[1:]:
-        if f == prev:
-            length += frame_ms
-        else:
-            result.append({"hz": prev, "length_ms": length})
-            prev = f
-            length = frame_ms
-
-    result.append({"hz": prev, "length_ms": length})
-    return result
 
 def aud_convert(path, out):
-    FRAME_MS = 30
-    FRAME_SIZE = int(8000 * FRAME_MS / 1000)
-    HOP_SIZE = FRAME_SIZE
-
-    freqs = []
-
     to_wav(path)
     y, sr = librosa.load(path + ".wav", sr=None, mono=True)
     
-    for i in range(0, len(y) - FRAME_SIZE, HOP_SIZE):
-        frame = y[i:i + FRAME_SIZE]
+    y = y / np.max(np.abs(y))
+    pcm = ((y + 1.0) * 127.5).astype(np.uint8)
 
-        if np.max(np.abs(frame)) < 0.01:
-            freqs.append(0)
-            continue
+    with open(out, "wb") as f:
+        f.write(pcm.tobytes())
 
-        f = dominant_freq(frame, sr)
-        freqs.append(f)
-
-    freqs = [quantize(f) for f in freqs]
-    seq = compress(freqs, FRAME_MS)
-
-    with open(out, "wb") as out:
-        for s in seq:
-            out.write(struct.pack(
-                "<II",
-                int(s["hz"]),
-                int(s["length_ms"])
-            ))
     print("Audio processed!")
 
 if __name__ == "__main__":

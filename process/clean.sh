@@ -1,0 +1,2 @@
+rm *.audbin
+rm *.imgbin
