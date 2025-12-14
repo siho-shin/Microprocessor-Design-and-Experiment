@@ -3,7 +3,7 @@
 
 #include "fnd.h"
 
-struct file_t videos[MAX_VIDEOS];
+struct entry_t header[MAX_VIDEOS];
 
 uint8_t buffer[512];
 
@@ -11,8 +11,8 @@ void init_video_list(void)
 {
 	int i;
 
-	for (i = 0; i < sizeof(struct file_t) * MAX_VIDEOS; i++)
-		((char *)&videos)[i] = 0;
+	for (i = 0; i < sizeof(struct entry_t) * MAX_VIDEOS; i++)
+		((char *)&header)[i] = 0;
 }
 
 int fetch_video_list(int *pvideo_cnt)
@@ -25,11 +25,11 @@ int fetch_video_list(int *pvideo_cnt)
 	ret = sd_read_blk(0, buffer);
 	if (ret) return ret;
 
-	for (i = 0; i < sizeof(struct file_t) * MAX_VIDEOS; i++)
-		((char *)&videos)[i] = buffer[i];
+	for (i = 0; i < sizeof(struct entry_t) * MAX_VIDEOS; i++)
+		((char *)&header)[i] = buffer[i];
 
 	for (i = 0; i < MAX_VIDEOS; i++)
-		if (!(videos[i].is_valid))
+		if (!(header[i].audio_lba))
 			break;
 	*pvideo_cnt = i;
 

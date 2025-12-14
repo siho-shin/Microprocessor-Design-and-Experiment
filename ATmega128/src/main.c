@@ -114,7 +114,7 @@ void lower_switch(void)
 void show_menu(void)
 {
 	led_set(1 << (7 - video_selected));
-	fnd_display_number_dot((video_selected % 100) * 100 + (video_cnt % 100), 1);
+	fnd_display_number_dot((video_selected % 100) * 100 + ((video_cnt - 1) % 100), 1);
 }
 
 TASK_DOIF(show_menu, MS(2), booting >= 10);

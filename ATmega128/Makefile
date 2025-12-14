@@ -8,7 +8,7 @@ CC = avr-gcc
 CPP = avr-g++
 
 ## Options common to compile, link and assembly rules
-COMMON = -mmcu=$(MCU) -Iinc
+COMMON = -mmcu=$(MCU) -Iinc -I../common
 
 ## Compile options common for all C compilation units.
 ## -Wall: Enable all warnings
