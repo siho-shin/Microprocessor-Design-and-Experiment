@@ -36,17 +36,29 @@ uint8_t get_pixel(char *video_buffer, int i, int j)
 	return (byte >> (j % BYTES_PER_PIXEL)) & 1;
 }
 
-void read_blk(struct cache_t *pc, int index)
+void read_blk(struct cache_t *pc, int index, void (*finish_routine)(void), int is_async)
 {
 	uint8_t ret;
 
-	ret = sd_read_blk(
-		pc->base + pc->offset,
-		(uint8_t *)(pc->mem + (index * 512))
-	);
-	if (ret) emergency_halt(CACHE_ERROR_CODE);
+	if (!is_async)
+	{
+		ret = sd_read_blk(
+			pc->base + pc->offset,
+			(uint8_t *)(pc->mem + (index * 512))
+		);
+		if (ret) emergency_halt(CACHE_ERROR_CODE);
 
-	pc->offset++;
+		pc->offset++;
+	}
+	else
+	{
+		ret = sd_read_blk_async(
+			pc->base + pc->offset,
+			(uint8_t *)(pc->mem + (index * 512)),
+			finish_routine
+		);
+		if (ret) emergency_halt(CACHE_ERROR_CODE);
+	}
 }
 
 int rounding(double num)
@@ -84,25 +96,27 @@ void populate_cache(void)
 
 	// audio
 	for (i = 0; i < AUDIO_CACHE_COUNT; i++)
-		read_blk(&cache.audio, i);
+		read_blk(&cache.audio, i, 0, 0);
 
 	// video
 	for (i = 0; i < VIDEO_CACHE_COUNT; i++)
-		read_blk(&cache.video, i);
+		read_blk(&cache.video, i, 0, 0);
 }
 
 /**************** TASKS ****************/
+
+void cache_video_finish_routine(void)
+{
+	cache.video.offset++;
+	cache.video.is_uselss = 0;
+}
 
 void cache_video(void)
 {
 	int recache_index;
 
-	//time_t start = ticks;
 	recache_index = (cache.video.using + VIDEO_CACHE_COUNT - 1) % VIDEO_CACHE_COUNT;
-	read_blk(&cache.video, recache_index);
-	cache.video.is_uselss = 0;
-	//time_t end = ticks;
-	//emergency_halt(end - start);
+	read_blk(&cache.video, recache_index, cache_video_finish_routine, 1);
 }
 
 void update_time(void)
@@ -125,7 +139,7 @@ void play_video(void)
 	cache.video.is_uselss = 1;
 	
 	update_time();
-
+	cache_video();
 }
 
 void show_playing_time(void)
@@ -142,7 +156,7 @@ void show_led(void)
 }
 
 TASK_DOIF(cache_video, MS(30), cache.video.is_uselss);
-TASK_DOIF(play_video, MS(MS_PER_FRAME), playing);
+TASK_DOIF(play_video, MS(MS_PER_FRAME), playing && !cache.video.is_uselss);
 TASK_DOIF(show_led, MS(500), playing);
 TASK_DOIF(show_playing_time, FND_DISPLAY_RATE, TASK_WHILE_TRUE);
 

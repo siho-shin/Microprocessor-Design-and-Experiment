@@ -4,6 +4,7 @@
 
 #include "sd.h"
 #include "spi.h"
+#include "task.h"
 
 // DEBUG
 #include "fnd.h"
@@ -101,7 +102,6 @@ uint8_t sd_read_blk(uint32_t lba, uint8_t *buf)
 
 	SD_CS_LOW();
 
-	// 11 ticks
 	ret = sd_send_command(17, lba);
 	if (ret != 0x00)
 	{
@@ -109,10 +109,8 @@ uint8_t sd_read_blk(uint32_t lba, uint8_t *buf)
 		return ret;
 	}
 
-	// 3 ticks
 	while (spi_transfer(0xFF) != 0xFE);
 
-	// 527 ticks
 	for (i = 0; i < 512; i++)
 		buf[i] = spi_transfer(0xFF);
 
@@ -122,6 +120,55 @@ uint8_t sd_read_blk(uint32_t lba, uint8_t *buf)
 	SD_CS_HIGH();
 	spi_transfer(0xFF);
 
+	return 0;
+}
+
+int async_i;
+uint8_t *async_buf;
+
+int async_part(void)
+{
+	async_buf[async_i] = spi_transfer(0xFF);
+
+	async_i++;
+	if (async_i >= 512)
+		return ASYNC_FINISHED;
+	return ASYNC_UNFINISHED;
+}
+
+void __async_part_task(async_finished_routine froutine)
+{
+	if (!async_part())
+	{
+		timer_notify(SD_TASK_PERIOD, (void(*)(void))__async_part_task);
+		return;
+	}
+
+	spi_transfer(0xFF);
+	spi_transfer(0xFF);
+
+	SD_CS_HIGH();
+	spi_transfer(0xFF);
+
+	froutine();
+}
+
+uint8_t sd_read_blk_async(uint32_t lba, uint8_t *buf, async_finished_routine froutine)
+{
+	uint8_t ret;
+
+	SD_CS_LOW();
+
+	ret = sd_send_command(17, lba);
+	if (ret != 0x00)
+	{
+		SD_CS_HIGH();
+		return 1;
+	}
+
+	while (spi_transfer(0xFF) != 0xFE);
+
+	__async_part_task(froutine);
 	return 0;
 }
 

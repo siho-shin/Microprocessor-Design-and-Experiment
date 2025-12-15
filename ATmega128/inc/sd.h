@@ -4,7 +4,12 @@
 #include <avr/io.h>
 #include <avr/iom128.h>
 
+#include "timer.h"
+#include "task.h"
+
 #define SD_ERROR_CODE	4444
+
+#define SD_TASK_PERIOD	TICKS(2)
 
 #define SD_CS	(PB0)
 #define SD_SCK	(PB1)
@@ -14,5 +19,6 @@
 // returns 0 is init has failed
 int sd_init(void);
 uint8_t sd_read_blk(uint32_t lba, uint8_t *buf);
+uint8_t sd_read_blk_async(uint32_t lba, uint8_t *buf, async_finished_routine froutine);
 
 #endif

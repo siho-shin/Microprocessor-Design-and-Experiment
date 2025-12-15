@@ -3,7 +3,12 @@
 
 #include "timer.h"
 
-#define TASK_WHILE_TRUE	1
+#define TASK_WHILE_TRUE		1
+
+#define ASYNC_UNFINISHED	0
+#define ASYNC_FINISHED		1
+
+typedef void (*async_finished_routine)(void);
 
 #define TASK_WHILE(func, period, condition)		\
 	char __##func##_stopper = 0;			\
@@ -41,11 +46,25 @@
 			func();				\
 	}
 
+#define TASK_WHILE_ASYNC(call, period, finish_routine)	\
+	char __##func##_stopper = 0;			\
+	void __##func##_task(void)			\
+	{						\
+		if (__##func##stopper)			\
+			return;				\
+		if (##call##)				\
+		{					\
+			finish_routine();		\
+			return;				\
+		}					\
+		timer_notify((period), __##func##_task);\
+	}
+
 #define START_TASK(func)	\
 	__##func##_stopper = 0;	\
 	__##func##_task();
 
 #define STOP_TASK(func)		\
 	__##func##_stopper = 1;	\
-		
+
 #endif

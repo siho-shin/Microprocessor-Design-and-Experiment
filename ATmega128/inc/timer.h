@@ -10,7 +10,7 @@ typedef void (*timerfunc_t)(void);
 typedef unsigned long long time_t;
 
 #define TICKS(x)	((time_t)(x))
-#define MS(x)		((time_t)((x) * (TICKS_PER_SEC / 1000)))
+#define MS(x)		((time_t)(((x) * (TICKS_PER_SEC / 1000))))
 
 void timer_init(void);
 void timer_notify(time_t ms, timerfunc_t func);
