@@ -4,6 +4,8 @@
 #include <avr/io.h>
 #include <avr/iom128.h>
 
+#define SD_ERROR_CODE	4444
+
 #define SD_CS	(PB0)
 #define SD_SCK	(PB1)
 #define SD_MOSI	(PB2)

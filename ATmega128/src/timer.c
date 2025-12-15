@@ -188,11 +188,14 @@ void schedule(void)
 		cur_ticks = ticks;
 
 		if (is_queue_empty())
-		{
-			led_set(0b11000011);
 			continue;
-		}
 		if (is_passed(front, cur_ticks))
 			set_off(cur_ticks);
 	}
+}
+
+void emergency_halt(int error_code)
+{
+	cli();
+	while (1) fnd_display_number(error_code);
 }

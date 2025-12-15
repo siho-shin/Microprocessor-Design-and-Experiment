@@ -13,13 +13,16 @@
 #include "sd.h"
 #include "task.h"
 #include "file.h"
+#include "play.h"
 
 char is_playing;
+char is_paused;
 int video_cnt;
 int video_selected;
 
-void upper_switch();
-void lower_switch();
+void upper_switch(void);
+void lower_switch(void);
+void show_menu(void);
 
 /**************************************************** INIT ****************************************************/ 
 char booting = 0;
@@ -89,26 +92,35 @@ void init(void)
 
 /**************************************************** MENU ****************************************************/ 
 
+TASK_DYNAMIC(show_menu, MS(2), booting >= 10, is_playing);
+
 void upper_switch(void)
 {
-	if (is_playing)
+	if (is_playing) // pause
 	{
-
+		if (is_paused) play();
+		else pause();
+		is_paused = 1 - is_paused;
 	}
-	else
+	else if (booting >= 10)
 		video_selected = (video_selected + 1) % video_cnt;
 }
 
 void lower_switch(void)
 {
 	
-	if (is_playing)
+	if (is_playing) // stop!
 	{
-
+		is_playing = 0;
+		stop();
+		START_TASK(show_menu);
 	}
-	else
-		// change this to "play"
-		video_selected = (video_selected + video_cnt - 1) % video_cnt;
+	else if (booting >= 10) // play!
+	{
+		is_playing = 1;
+		play_init(get_video_header(video_selected));
+		play();
+	}
 }
 
 void show_menu(void)
@@ -117,47 +129,11 @@ void show_menu(void)
 	fnd_display_number_dot((video_selected % 100) * 100 + ((video_cnt - 1) % 100), 1);
 }
 
-TASK_DOIF(show_menu, MS(2), booting >= 10);
-
 /**************************************************** MENU ****************************************************/ 
-
-/**************************************************** DEBUG ****************************************************/ 
-/*
-volatile int on;
-volatile int ms;
-
-void start_timer(void)
-{
-	on = 1 - on;
-}
-
-void end_timer(void)
-{
-	ms = 0;
-}
-
-void display(void)
-{
-	fnd_display_number_dot(ms, 2);
-}
-
-void mspp(void)
-{
-	if (on)
-		ms++;
-}
-
-TASK_DOIF(display, 2, booting >= 10);
-TASK_DOIF(mspp, MS(100), booting >= 10 && on);
-*/
-/**************************************************** DEBUG ****************************************************/ 
 
 int main(void)
 {
 	init();
-	
-	//START_TASK(display);
-	//START_TASK(mspp);
 	
 	START_TASK(show_menu);
 

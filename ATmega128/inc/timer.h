@@ -15,5 +15,6 @@ typedef unsigned long long time_t;
 void timer_init(void);
 void timer_notify(time_t ms, timerfunc_t func);
 void schedule(void);
+void emergency_halt(int error_code);
 
 #endif

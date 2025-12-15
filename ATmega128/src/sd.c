@@ -101,6 +101,7 @@ uint8_t sd_read_blk(uint32_t lba, uint8_t *buf)
 
 	SD_CS_LOW();
 
+	// 11 ticks
 	ret = sd_send_command(17, lba);
 	if (ret != 0x00)
 	{
@@ -108,8 +109,10 @@ uint8_t sd_read_blk(uint32_t lba, uint8_t *buf)
 		return ret;
 	}
 
+	// 3 ticks
 	while (spi_transfer(0xFF) != 0xFE);
 
+	// 527 ticks
 	for (i = 0; i < 512; i++)
 		buf[i] = spi_transfer(0xFF);
 
@@ -130,8 +133,8 @@ int sd_init(void)
 	DDRB |= (1 << SD_CS) | (1 << SD_SCK) | (1 << SD_MOSI);
 	DDRB &= ~(1 << SD_MISO);
 	SPCR = (1 << SPE) | (1 << MSTR);
-	SPCR |= (1 << SPR1) | (1 << SPR0);
-	SPSR &= ~(1 << SPI2X);
+	SPCR &= ~((1 << SPR1) | (1 << SPR0));
+	SPSR |= (1 << SPI2X);
 	sd_is_init = 1;
 
 	return sd_comm_init();

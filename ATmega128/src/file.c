@@ -35,3 +35,8 @@ int fetch_video_list(int *pvideo_cnt)
 
 	return 0;
 }
+
+struct entry_t *get_video_header(int index)
+{
+	return &header[index];
+}
