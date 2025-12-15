@@ -24,6 +24,7 @@ struct
 char audio_cache[AUDIO_CACHE_SIZE];
 
 char playing;
+char paused;
 int playing_time;
 char progress_bar_blinking;
 
@@ -96,13 +97,12 @@ void cache_video(void)
 {
 	int recache_index;
 
-	time_t start = ticks;
+	//time_t start = ticks;
 	recache_index = (cache.video.using + VIDEO_CACHE_COUNT - 1) % VIDEO_CACHE_COUNT;
 	read_blk(&cache.video, recache_index);
 	cache.video.is_uselss = 0;
-	time_t end = ticks;
-
-	emergency_halt(end - start);
+	//time_t end = ticks;
+	//emergency_halt(end - start);
 }
 
 void update_time(void)
@@ -125,6 +125,7 @@ void play_video(void)
 	cache.video.is_uselss = 1;
 	
 	update_time();
+
 }
 
 void show_playing_time(void)
@@ -140,7 +141,7 @@ void show_led(void)
 	progress_bar(playing_time, cur_video->length_sec);
 }
 
-TASK_DOIF(cache_video, MS(10), cache.video.is_uselss);
+TASK_DOIF(cache_video, MS(30), cache.video.is_uselss);
 TASK_DOIF(play_video, MS(MS_PER_FRAME), playing);
 TASK_DOIF(show_led, MS(500), playing);
 TASK_DOIF(show_playing_time, FND_DISPLAY_RATE, TASK_WHILE_TRUE);
@@ -152,6 +153,7 @@ void play_init(struct entry_t *to_play)
 	cur_video = to_play;
 
 	playing = 0;
+	paused = 0;
 	playing_time = -1;
 	progress_bar_blinking = 0;
 
@@ -175,15 +177,20 @@ void play(void)
 {
 	playing = 1;
 
-	START_TASK(cache_video);
 	START_TASK(play_video);
 	START_TASK(show_led);
-	START_TASK(show_playing_time);
+
+	if (!paused)
+	{
+		START_TASK(cache_video);
+		START_TASK(show_playing_time);
+	}
 }
 
 void pause(void)
 {
 	playing = 0;
+	paused = 1;
 
 	STOP_TASK(play_video);
 	STOP_TASK(show_led);

@@ -115,13 +115,33 @@ void sort(void)
 	//debug(MOD_TIMER, SORT3);
 }
 
+void set_off(time_t set_off_time)
+{
+	//debug(MOD_TIMER, SET_OFF);
+
+	while (!is_queue_empty() && is_passed(front, set_off_time))
+	{
+		waiting[front].handler();
+		cli();
+		reset_waiting_queue_element(front);
+		circular_increment(&front);
+		sei();
+	}
+}
+
 int insert_to_queue(time_t sleep_time, timerfunc_t handler)
 {
 	time_t cur_ticks = ticks;
 	int pos = has_init ? back_excl : 0;
 
 	//debug(MOD_TIMER, INSERT_TO_QUEUE);
-	while (is_queue_full());// || !is_insertable(handler));
+	while (is_queue_full())// || !is_insertable(handler))
+	{
+		cur_ticks = ticks;
+
+		if (is_passed(front, cur_ticks))
+			set_off(cur_ticks);
+	}
 
 	cli();
 	waiting[pos].arrival_time = cur_ticks;
@@ -135,20 +155,6 @@ int insert_to_queue(time_t sleep_time, timerfunc_t handler)
 	sei();
 
 	return 0;
-}
-
-void set_off(time_t set_off_time)
-{
-	//debug(MOD_TIMER, SET_OFF);
-
-	while (!is_queue_empty() && is_passed(front, set_off_time))
-	{
-		waiting[front].handler();
-		cli();
-		reset_waiting_queue_element(front);
-		circular_increment(&front);
-		sei();
-	}
 }
 
 ISR(TIMER1_COMPA_vect)
