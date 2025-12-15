@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include "timer.h"
 
-#define FND_DISPLAY_RATE	TICKS(4)
+#define FND_DISPLAY_RATE	TICKS(32)
 
 void fnd_init(void);
 void fnd_display_number(uint16_t number);

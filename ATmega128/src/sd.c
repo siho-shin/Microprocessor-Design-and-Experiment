@@ -125,22 +125,26 @@ uint8_t sd_read_blk(uint32_t lba, uint8_t *buf)
 
 int async_i;
 uint8_t *async_buf;
+void (*async_finish)(void);
 
 int async_part(void)
 {
+	if (async_i == 1)
+		emergency_halt(1000);
 	async_buf[async_i] = spi_transfer(0xFF);
-
 	async_i++;
+
 	if (async_i >= 512)
 		return ASYNC_FINISHED;
 	return ASYNC_UNFINISHED;
 }
 
-void __async_part_task(async_finished_routine froutine)
+void async_part_task(void)
 {
-	if (!async_part())
+	if (async_part() == ASYNC_UNFINISHED)
 	{
-		timer_notify(SD_TASK_PERIOD, (void(*)(void))__async_part_task);
+		timer_notify(SD_TASK_PERIOD, async_part_task);
+		//timer_notify(500, async_part_task);
 		return;
 	}
 
@@ -150,7 +154,7 @@ void __async_part_task(async_finished_routine froutine)
 	SD_CS_HIGH();
 	spi_transfer(0xFF);
 
-	froutine();
+	async_finish();
 }
 
 uint8_t sd_read_blk_async(uint32_t lba, uint8_t *buf, async_finished_routine froutine)
@@ -168,7 +172,10 @@ uint8_t sd_read_blk_async(uint32_t lba, uint8_t *buf, async_finished_routine fro
 
 	while (spi_transfer(0xFF) != 0xFE);
 
-	__async_part_task(froutine);
+	async_i = 0;
+	async_buf = buf;
+	async_finish = froutine;
+	async_part_task();
 	return 0;
 }
 

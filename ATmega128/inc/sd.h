@@ -9,7 +9,7 @@
 
 #define SD_ERROR_CODE	4444
 
-#define SD_TASK_PERIOD	TICKS(2)
+#define SD_TASK_PERIOD	TICKS(3)
 
 #define SD_CS	(PB0)
 #define SD_SCK	(PB1)

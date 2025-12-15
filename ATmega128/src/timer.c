@@ -137,6 +137,7 @@ int insert_to_queue(time_t sleep_time, timerfunc_t handler)
 	//debug(MOD_TIMER, INSERT_TO_QUEUE);
 	while (is_queue_full())// || !is_insertable(handler))
 	{
+		fnd_display_number(1111);
 		cur_ticks = ticks;
 
 		if (is_passed(front, cur_ticks))
@@ -171,7 +172,7 @@ void timer_init(void)
 
 	TCCR1A |= (1 << COM1A1);
 	TCCR1B |= (1 << WGM12) | (1 << CS10);
-	OCR1A = 1024;
+	OCR1A = 256;
 	TIMSK |= (1 << OCIE1A);
 	timer_is_init = 1;
 
@@ -180,9 +181,9 @@ void timer_init(void)
 	sei();
 }
 
-void timer_notify(time_t ms, timerfunc_t func)
+void timer_notify(time_t delay, timerfunc_t func)
 {
-	insert_to_queue(ms, func);
+	insert_to_queue(delay, func);
 }
 
 void schedule(void)

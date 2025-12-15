@@ -4,7 +4,7 @@
 #define WAITING_QUEUE_INVALID	0x7FFFFFFF
 #define WAITING_QUEUE_SZ	32
 
-#define TICKS_PER_SEC		16000
+#define TICKS_PER_SEC		64000
 
 typedef void (*timerfunc_t)(void);
 typedef unsigned long long time_t;
